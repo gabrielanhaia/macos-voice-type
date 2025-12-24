@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# voice-claude: Speak to Claude Code via voice
+# Uses whisper-cpp for offline speech recognition
+#
+
+MODEL="$HOME/.local/share/whisper-cpp/ggml-base.en.bin"
+TEMP_WAV="/tmp/voice-claude-$$.wav"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+cleanup() {
+    rm -f "$TEMP_WAV"
+}
+trap cleanup EXIT
+
+echo -e "${GREEN}Listening...${NC} (speak, then pause for 1.5s to stop)"
+
+# Record audio until 1.5s of silence
+sox -d -r 16000 -c 1 -b 16 "$TEMP_WAV" silence 1 0.1 1% 1 1.5 1% 2>/dev/null
+
+if [ ! -f "$TEMP_WAV" ] || [ ! -s "$TEMP_WAV" ]; then
+    echo -e "${YELLOW}No audio captured. Try again.${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}Transcribing...${NC}"
+
+# Transcribe with whisper
+TEXT=$(whisper-cli -m "$MODEL" -f "$TEMP_WAV" --no-timestamps 2>/dev/null | grep -v "^$" | sed 's/^[[:space:]]*//')
+
+if [ -z "$TEXT" ]; then
+    echo -e "${YELLOW}Could not transcribe. Try speaking more clearly.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}You said:${NC} $TEXT"
+echo ""
+
+# Send to Claude
+claude -p "$TEXT"

@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# voice-claude-chat: Interactive voice chat with Claude Code
+# Press Enter to speak, Ctrl+C to exit
+#
+
+MODEL="$HOME/.local/share/whisper-cpp/ggml-base.en.bin"
+TEMP_WAV="/tmp/voice-claude-chat-$$.wav"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+cleanup() {
+    rm -f "$TEMP_WAV"
+    echo -e "\n${YELLOW}Goodbye!${NC}"
+}
+trap cleanup EXIT
+
+echo -e "${CYAN}+----------------------------------------+${NC}"
+echo -e "${CYAN}|   Voice Chat with Claude Code          |${NC}"
+echo -e "${CYAN}|   Press Enter to speak, Ctrl+C to exit |${NC}"
+echo -e "${CYAN}+----------------------------------------+${NC}"
+echo ""
+
+while true; do
+    echo -e "${BLUE}Press Enter to start speaking...${NC}"
+    read -r
+
+    echo -e "${GREEN}Listening...${NC} (pause for 1.5s to stop)"
+
+    # Record audio
+    sox -d -r 16000 -c 1 -b 16 "$TEMP_WAV" silence 1 0.1 1% 1 1.5 1% 2>/dev/null
+
+    if [ ! -f "$TEMP_WAV" ] || [ ! -s "$TEMP_WAV" ]; then
+        echo -e "${YELLOW}No audio captured. Try again.${NC}"
+        continue
+    fi
+
+    echo -e "${BLUE}Transcribing...${NC}"
+
+    # Transcribe
+    TEXT=$(whisper-cli -m "$MODEL" -f "$TEMP_WAV" --no-timestamps 2>/dev/null | grep -v "^$" | sed 's/^[[:space:]]*//')
+
+    if [ -z "$TEXT" ]; then
+        echo -e "${YELLOW}Could not transcribe. Try again.${NC}"
+        continue
+    fi
+
+    echo -e "${GREEN}You said:${NC} $TEXT"
+    echo ""
+
+    # Send to Claude (in print mode for single response)
+    claude -p "$TEXT"
+
+    echo ""
+    echo -e "${CYAN}----------------------------------------${NC}"
+    echo ""
+done

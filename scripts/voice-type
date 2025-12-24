@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# voice-type: Press hotkey, speak, auto-stops when you stop talking
+# Uses silence detection - stops after 1.5s of silence
+#
+
+# Full paths for Shortcuts compatibility
+REC="/opt/homebrew/bin/rec"
+WHISPER="/opt/homebrew/bin/whisper-cli"
+AFPLAY="/usr/bin/afplay"
+OSASCRIPT="/usr/bin/osascript"
+
+MODEL="$HOME/.local/share/whisper-cpp/ggml-tiny.en.bin"
+TEMP_WAV="/tmp/voice-type-$$.wav"
+
+# Max recording time (safety limit)
+MAX_DURATION=60
+
+cleanup() {
+    rm -f "$TEMP_WAV"
+}
+trap cleanup EXIT
+
+# Play start sound
+$AFPLAY /System/Library/Sounds/Pop.aiff &
+
+# Record with silence detection:
+# - Starts recording immediately
+# - Stops after 1.5 seconds of silence (below 1% threshold)
+# - Max duration as safety net
+$REC -q "$TEMP_WAV" rate 16k channels 1 \
+    silence 1 0.1 1% \
+    1 1.5 1% \
+    trim 0 $MAX_DURATION 2>/dev/null
+
+if [ ! -f "$TEMP_WAV" ] || [ ! -s "$TEMP_WAV" ]; then
+    $AFPLAY /System/Library/Sounds/Basso.aiff &
+    exit 1
+fi
+
+# Transcribe
+TEXT=$($WHISPER -m "$MODEL" -f "$TEMP_WAV" -t 8 --no-timestamps 2>/dev/null | grep -v "^$" | sed 's/^[[:space:]]*//' | tr -d '\n')
+
+if [ -z "$TEXT" ]; then
+    $AFPLAY /System/Library/Sounds/Basso.aiff &
+    exit 1
+fi
+
+# Play success sound
+$AFPLAY /System/Library/Sounds/Glass.aiff &
+
+# Type the text (escape special characters for AppleScript)
+ESCAPED_TEXT=$(echo "$TEXT" | sed 's/\\/\\\\/g; s/"/\\"/g')
+$OSASCRIPT -e "tell application \"System Events\" to keystroke \"$ESCAPED_TEXT\""
