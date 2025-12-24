@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# voice-shortcut: Voice typing for macOS Shortcuts app
+# Records audio, transcribes with Whisper, pastes text via clipboard
+#
+
+# Full paths for Shortcuts compatibility
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+# Detect Homebrew prefix
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
+    HOMEBREW_PREFIX="/opt/homebrew"
+else
+    HOMEBREW_PREFIX="/usr/local"
+fi
+
+REC="$HOMEBREW_PREFIX/bin/rec"
+WHISPER="$HOMEBREW_PREFIX/bin/whisper-cli"
+AFPLAY="/usr/bin/afplay"
+
+MODEL="$HOME/.local/share/whisper-cpp/ggml-tiny.en.bin"
+TEMP_WAV="/tmp/voice-shortcut-$$.wav"
+MAX_DURATION=60
+
+cleanup() {
+    rm -f "$TEMP_WAV"
+}
+trap cleanup EXIT
+
+# Play start sound
+$AFPLAY /System/Library/Sounds/Pop.aiff &
+
+# Record with silence detection:
+# - Starts recording immediately
+# - Stops after 1.5 seconds of silence (below 1% threshold)
+# - Max duration as safety net
+$REC -q "$TEMP_WAV" rate 16k channels 1 \
+    silence 1 0.1 1% \
+    1 1.5 1% \
+    trim 0 $MAX_DURATION 2>/dev/null
+
+if [ ! -f "$TEMP_WAV" ] || [ ! -s "$TEMP_WAV" ]; then
+    $AFPLAY /System/Library/Sounds/Basso.aiff &
+    exit 1
+fi
+
+# Transcribe
+TEXT=$($WHISPER -m "$MODEL" -f "$TEMP_WAV" -t 8 --no-timestamps 2>/dev/null | grep -v "^$" | sed 's/^[[:space:]]*//' | tr -d '\n')
+
+if [ -z "$TEXT" ]; then
+    $AFPLAY /System/Library/Sounds/Basso.aiff &
+    exit 1
+fi
+
+# Play success sound
+$AFPLAY /System/Library/Sounds/Glass.aiff &
+
+# Use clipboard + paste (works reliably in all apps including Chrome)
+OLD_CLIPBOARD=$(pbpaste 2>/dev/null)
+echo -n "$TEXT" | pbcopy
+osascript -e 'tell application "System Events" to keystroke "v" using command down'
+sleep 0.2
+echo -n "$OLD_CLIPBOARD" | pbcopy

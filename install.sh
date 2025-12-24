@@ -30,6 +30,13 @@ if [[ "$(uname)" != "Darwin" ]]; then
     exit 1
 fi
 
+# Check macOS version (requires Monterey 12+ for Shortcuts)
+macos_version=$(sw_vers -productVersion | cut -d. -f1)
+if [[ "$macos_version" -lt 12 ]]; then
+    echo -e "${RED}Error: macOS 12 (Monterey) or later is required${NC}"
+    exit 1
+fi
+
 # Check for Apple Silicon vs Intel
 if [[ "$(uname -m)" == "arm64" ]]; then
     HOMEBREW_PREFIX="/opt/homebrew"
@@ -82,11 +89,13 @@ mkdir -p "$HOME/bin"
 
 # Copy scripts
 cp "$SCRIPT_DIR/scripts/voice-type" "$HOME/bin/"
+cp "$SCRIPT_DIR/scripts/voice-shortcut" "$HOME/bin/"
 cp "$SCRIPT_DIR/scripts/voice-claude" "$HOME/bin/"
 cp "$SCRIPT_DIR/scripts/voice-claude-chat" "$HOME/bin/"
 
 # Make executable
 chmod +x "$HOME/bin/voice-type"
+chmod +x "$HOME/bin/voice-shortcut"
 chmod +x "$HOME/bin/voice-claude"
 chmod +x "$HOME/bin/voice-claude-chat"
 
@@ -101,233 +110,57 @@ if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
 fi
 
 echo ""
-echo -e "${BLUE}Step 5: Creating Automator Quick Action...${NC}"
+echo -e "${BLUE}Step 5: Creating VoiceType.app...${NC}"
 
-WORKFLOW_DIR="$HOME/Library/Services/Voice Type.workflow/Contents"
-mkdir -p "$WORKFLOW_DIR"
+# Create AppleScript-based app for Accessibility permissions
+cat > /tmp/voicetype.applescript << 'APPLESCRIPT'
+-- VoiceType: Record, transcribe, and type
+-- This app has Accessibility permission to type text
 
-# Create the workflow plist
-cat > "$WORKFLOW_DIR/document.wflow" << 'WFLOW'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>AMApplicationBuild</key>
-	<string>523</string>
-	<key>AMApplicationVersion</key>
-	<string>2.10</string>
-	<key>AMDocumentVersion</key>
-	<string>2</string>
-	<key>actions</key>
-	<array>
-		<dict>
-			<key>action</key>
-			<dict>
-				<key>AMAccepts</key>
-				<dict>
-					<key>Container</key>
-					<string>List</string>
-					<key>Optional</key>
-					<true/>
-					<key>Types</key>
-					<array>
-						<string>com.apple.cocoa.string</string>
-					</array>
-				</dict>
-				<key>AMActionVersion</key>
-				<string>2.0.3</string>
-				<key>AMApplication</key>
-				<array>
-					<string>Automator</string>
-				</array>
-				<key>AMCategory</key>
-				<string>AMCategoryUtilities</string>
-				<key>AMIconName</key>
-				<string>Run Shell Script</string>
-				<key>AMName</key>
-				<string>Run Shell Script</string>
-				<key>AMProvides</key>
-				<dict>
-					<key>Container</key>
-					<string>List</string>
-					<key>Types</key>
-					<array>
-						<string>com.apple.cocoa.string</string>
-					</array>
-				</dict>
-				<key>ActionBundlePath</key>
-				<string>/System/Library/Automator/Run Shell Script.action</string>
-				<key>ActionName</key>
-				<string>Run Shell Script</string>
-				<key>ActionParameters</key>
-				<dict>
-					<key>COMMAND_STRING</key>
-					<string>$HOME/bin/voice-type</string>
-					<key>CheckedForUserDefaultShell</key>
-					<true/>
-					<key>inputMethod</key>
-					<integer>1</integer>
-					<key>shell</key>
-					<string>/bin/zsh</string>
-					<key>source</key>
-					<string></string>
-				</dict>
-				<key>BundleIdentifier</key>
-				<string>com.apple.RunShellScript</string>
-				<key>CFBundleVersion</key>
-				<string>2.0.3</string>
-				<key>CanShowSelectedItemsWhenRun</key>
-				<false/>
-				<key>CanShowWhenRun</key>
-				<true/>
-				<key>Category</key>
-				<array>
-					<string>AMCategoryUtilities</string>
-				</array>
-				<key>Class Name</key>
-				<string>RunShellScriptAction</string>
-				<key>InputUUID</key>
-				<string>E9C79C86-B9D3-4E4A-8E0D-4C0E6B8F5B1C</string>
-				<key>Keywords</key>
-				<array>
-					<string>Shell</string>
-					<string>Script</string>
-					<string>Command</string>
-					<string>Run</string>
-					<string>Unix</string>
-				</array>
-				<key>OutputUUID</key>
-				<string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
-				<key>UUID</key>
-				<string>F1E2D3C4-B5A6-9870-1234-567890ABCDEF</string>
-				<key>UnlocalizedApplications</key>
-				<array>
-					<string>Automator</string>
-				</array>
-				<key>arguments</key>
-				<dict>
-					<key>0</key>
-					<dict>
-						<key>default value</key>
-						<integer>0</integer>
-						<key>name</key>
-						<string>inputMethod</string>
-						<key>required</key>
-						<string>0</string>
-						<key>type</key>
-						<string>0</string>
-						<key>uuid</key>
-						<string>0</string>
-					</dict>
-					<key>1</key>
-					<dict>
-						<key>default value</key>
-						<string></string>
-						<key>name</key>
-						<string>source</string>
-						<key>required</key>
-						<string>0</string>
-						<key>type</key>
-						<string>0</string>
-						<key>uuid</key>
-						<string>1</string>
-					</dict>
-					<key>2</key>
-					<dict>
-						<key>default value</key>
-						<false/>
-						<key>name</key>
-						<string>CheckedForUserDefaultShell</string>
-						<key>required</key>
-						<string>0</string>
-						<key>type</key>
-						<string>0</string>
-						<key>uuid</key>
-						<string>2</string>
-					</dict>
-					<key>3</key>
-					<dict>
-						<key>default value</key>
-						<string></string>
-						<key>name</key>
-						<string>COMMAND_STRING</string>
-						<key>required</key>
-						<string>0</string>
-						<key>type</key>
-						<string>0</string>
-						<key>uuid</key>
-						<string>3</string>
-					</dict>
-					<key>4</key>
-					<dict>
-						<key>default value</key>
-						<string>/bin/zsh</string>
-						<key>name</key>
-						<string>shell</string>
-						<key>required</key>
-						<string>0</string>
-						<key>type</key>
-						<string>0</string>
-						<key>uuid</key>
-						<string>4</string>
-					</dict>
-				</dict>
-			</dict>
-		</dict>
-	</array>
-	<key>connectors</key>
-	<dict/>
-	<key>workflowMetaData</key>
-	<dict>
-		<key>workflowTypeIdentifier</key>
-		<string>com.apple.Automator.servicesMenu</string>
-	</dict>
-</dict>
-</plist>
-WFLOW
+set homeFolder to (do shell script "echo $HOME")
+set shortcutScript to homeFolder & "/bin/voice-shortcut"
 
-# Create Info.plist
-cat > "$WORKFLOW_DIR/Info.plist" << 'INFOPLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>NSServices</key>
-	<array>
-		<dict>
-			<key>NSMenuItem</key>
-			<dict>
-				<key>default</key>
-				<string>Voice Type</string>
-			</dict>
-			<key>NSMessage</key>
-			<string>runWorkflowAsService</string>
-		</dict>
-	</array>
-</dict>
-</plist>
-INFOPLIST
+try
+    do shell script shortcutScript
+on error errMsg
+    -- Error handled by voice-shortcut (plays error sound)
+end try
+APPLESCRIPT
 
-echo -e "${GREEN}Quick Action created${NC}"
+osacompile -o /Applications/VoiceType.app /tmp/voicetype.applescript
+
+# Make it a background app (no dock icon)
+/usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" /Applications/VoiceType.app/Contents/Info.plist 2>/dev/null || \
+/usr/libexec/PlistBuddy -c "Set :LSUIElement true" /Applications/VoiceType.app/Contents/Info.plist
+
+rm /tmp/voicetype.applescript
+
+echo -e "${GREEN}VoiceType.app created${NC}"
 
 echo ""
 echo -e "${CYAN}================================================${NC}"
 echo -e "${GREEN}Installation complete!${NC}"
 echo -e "${CYAN}================================================${NC}"
 echo ""
-echo -e "${YELLOW}IMPORTANT: Final setup steps:${NC}"
+echo -e "${YELLOW}IMPORTANT: Complete these setup steps:${NC}"
 echo ""
-echo "1. ${BLUE}Set keyboard shortcut:${NC}"
-echo "   - Open System Settings"
-echo "   - Go to Keyboard > Keyboard Shortcuts > Services"
-echo "   - Find 'Voice Type' under 'General'"
-echo "   - Click 'none' and press your shortcut (e.g., Control+Option+Command+P)"
+echo "1. ${BLUE}Grant Accessibility permission:${NC}"
+echo "   - Open System Settings > Privacy & Security > Accessibility"
+echo "   - Click + and add /Applications/VoiceType.app"
+echo "   - Make sure the toggle is ON"
 echo ""
-echo "2. ${BLUE}Grant permissions when prompted:${NC}"
-echo "   - Microphone access (for recording)"
-echo "   - Accessibility access (for typing text)"
+echo "2. ${BLUE}Create keyboard shortcut in Shortcuts app:${NC}"
+echo "   - Open the Shortcuts app (Cmd+Space, type 'Shortcuts')"
+echo "   - Click + to create a new shortcut"
+echo "   - Search for 'Run Shell Script' and add it"
+echo "   - Enter: $HOME/bin/voice-shortcut"
+echo "   - Click the shortcut name > Add Keyboard Shortcut"
+echo "   - Press your desired keys (e.g., Ctrl+Option+V)"
 echo ""
-echo "3. ${BLUE}Add ~/bin to PATH${NC} (if not already):"
+echo "3. ${BLUE}Grant Microphone permission:${NC}"
+echo "   - When you first use voice typing, allow microphone access"
+echo ""
+echo "4. ${BLUE}Add ~/bin to PATH${NC} (if not already):"
 echo "   echo 'export PATH=\"\$HOME/bin:\$PATH\"' >> ~/.zshrc"
 echo "   source ~/.zshrc"
 echo ""
@@ -335,4 +168,6 @@ echo -e "${GREEN}Usage:${NC}"
 echo "  - Press your hotkey anywhere to voice type"
 echo "  - Run 'voice-claude' in terminal for voice -> Claude"
 echo "  - Run 'voice-claude-chat' for interactive voice chat"
+echo ""
+echo -e "${CYAN}Tip: After setting up, restart any app where you want to use voice typing.${NC}"
 echo ""

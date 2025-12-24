@@ -4,6 +4,8 @@
 
 Press a hotkey anywhere, speak, and your words are typed automatically. No subscription, no cloud, no API keys - runs 100% locally on your Mac.
 
+![Demo](demo.gif)
+
 ## Features
 
 - **Hotkey voice typing** - Press a shortcut anywhere to dictate text
@@ -11,6 +13,7 @@ Press a hotkey anywhere, speak, and your words are typed automatically. No subsc
 - **Auto-stops on silence** - Just pause speaking and it stops recording
 - **Fast** - Uses the tiny.en model for quick transcription
 - **Free** - No subscriptions or API costs
+- **Works everywhere** - Chrome, Safari, Notes, VS Code, and any other app
 - **Claude Code integration** - Voice commands for Claude Code CLI (optional)
 
 ## Requirements
@@ -31,28 +34,32 @@ The installer will:
 1. Install dependencies (whisper-cpp, sox)
 2. Download Whisper AI models
 3. Install voice scripts to `~/bin/`
-4. Create the Automator Quick Action
+4. Create the VoiceType.app
 
 ## Manual Setup After Install
 
-### 1. Set Your Keyboard Shortcut
+### 1. Grant Accessibility Permission
 
-1. Open **System Settings**
-2. Go to **Keyboard** > **Keyboard Shortcuts** > **Services**
-3. Scroll to **General** and find **"Voice Type"**
-4. Click "none" next to it and press your desired shortcut
-   - Recommended: `Control + Option + Command + P`
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**
+2. Click **+** and navigate to `/Applications/VoiceType.app`
+3. Make sure the toggle is **ON**
 
-### 2. Grant Permissions
+### 2. Create Keyboard Shortcut
 
-When you first use voice typing, macOS will ask for:
+1. Open the **Shortcuts** app (Cmd+Space, type "Shortcuts")
+2. Click **+** to create a new shortcut
+3. Name it "Voice Type"
+4. Search for **"Run Shell Script"** and add it
+5. Enter: `$HOME/bin/voice-shortcut`
+6. Click the shortcut name at the top
+7. Click **"Add Keyboard Shortcut"**
+8. Press your desired keys (e.g., `Ctrl + Option + V`)
 
-- **Microphone access** - Required to record your voice
-- **Accessibility access** - Required to type the transcribed text
+### 3. Grant Microphone Permission
 
-Go to **System Settings** > **Privacy & Security** to manage these.
+When you first use voice typing, macOS will ask for microphone access. Allow it.
 
-### 3. Add ~/bin to PATH (if needed)
+### 4. Add ~/bin to PATH (if needed)
 
 If `voice-claude` commands don't work, add this to your `~/.zshrc`:
 
@@ -70,7 +77,7 @@ Then run `source ~/.zshrc`.
 2. Press your keyboard shortcut
 3. Hear the "pop" sound - start speaking
 4. Pause for 1.5 seconds
-5. Hear the "glass" sound - text is typed
+5. Hear the "glass" sound - text is pasted
 
 ### Voice to Claude (Terminal)
 
@@ -102,7 +109,7 @@ Your Voice
 [whisper-cpp] --> Transcribes using Whisper AI (tiny.en model)
     |
     v
-[AppleScript] --> Types text via System Events
+[Clipboard + Paste] --> Types text via Cmd+V
 ```
 
 **Models used:**
@@ -112,13 +119,17 @@ Your Voice
 ## Troubleshooting
 
 ### "No audio captured"
-- Check microphone permissions in System Settings > Privacy & Security
+- Check microphone permissions in System Settings > Privacy & Security > Microphone
 - Make sure your microphone is working
 
 ### Shortcut doesn't work
-- Verify the shortcut is set in System Settings > Keyboard > Keyboard Shortcuts > Services
-- Make sure "Voice Type" is checked/enabled
-- Try a different shortcut (some may be reserved)
+- Make sure the shortcut is set in the Shortcuts app
+- Try a different key combination (some may conflict with other apps)
+- **Restart the app** where you want to use voice typing
+
+### Shortcut works in some apps but not others
+- Some apps (like Chrome) need to be restarted after setting up
+- Make sure VoiceType.app has Accessibility permission
 
 ### "Basso" error sound plays
 - Recording failed or transcription was empty
@@ -126,8 +137,9 @@ Your Voice
 - Check that whisper-cpp is installed: `which whisper-cli`
 
 ### Text isn't typed
-- Grant Accessibility access to Automator and/or Terminal
+- Grant Accessibility access to VoiceType.app
 - System Settings > Privacy & Security > Accessibility
+- Make sure the toggle is ON
 
 ### voice-claude not found
 - Add `~/bin` to your PATH (see setup above)
@@ -137,16 +149,18 @@ Your Voice
 
 ```bash
 # Remove scripts
-rm ~/bin/voice-type ~/bin/voice-claude ~/bin/voice-claude-chat
+rm ~/bin/voice-type ~/bin/voice-shortcut ~/bin/voice-claude ~/bin/voice-claude-chat
 
-# Remove Automator workflow
-rm -rf ~/Library/Services/Voice\ Type.workflow
+# Remove VoiceType app
+rm -rf /Applications/VoiceType.app
 
 # Remove models (optional, ~250MB)
 rm -rf ~/.local/share/whisper-cpp
 
 # Remove dependencies (optional)
 brew uninstall whisper-cpp sox
+
+# Remove the shortcut manually from Shortcuts app
 ```
 
 ## Credits
