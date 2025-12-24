@@ -22,7 +22,7 @@ Press a hotkey anywhere, speak, and your words are typed automatically. No subsc
 ## Quick Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/macos-voice-type.git
+git clone https://github.com/gabrielanhaia/macos-voice-type.git
 cd macos-voice-type
 ./install.sh
 ```
