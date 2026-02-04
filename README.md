@@ -37,6 +37,8 @@ cd macos-voice-type
 4. Enter: `$HOME/bin/voice-shortcut`
 5. Click shortcut name → **Add Keyboard Shortcut** → press your keys (e.g. `Ctrl+Option+V`)
 
+<img width="1199" height="443" alt="image" src="https://github.com/user-attachments/assets/3c4798cc-c1f5-4c2c-9a16-bffc96ee6625" />
+
 ### Step 3: Test It
 
 1. Open any app with a text field
