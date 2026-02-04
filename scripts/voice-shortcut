@@ -17,17 +17,24 @@ fi
 REC="$HOMEBREW_PREFIX/bin/rec"
 WHISPER="$HOMEBREW_PREFIX/bin/whisper-cli"
 AFPLAY="/usr/bin/afplay"
+NOTIFY="$HOME/bin/voicetype-notify"
 
 MODEL="$HOME/.local/share/whisper-cpp/ggml-tiny.en.bin"
 TEMP_WAV="/tmp/voice-shortcut-$$.wav"
 MAX_DURATION=60
+
+# Notify indicator of state changes (silent failure if not installed)
+notify_state() {
+    [ -x "$NOTIFY" ] && "$NOTIFY" "$1" 2>/dev/null || true
+}
 
 cleanup() {
     rm -f "$TEMP_WAV"
 }
 trap cleanup EXIT
 
-# Play start sound
+# Notify recording state and play start sound
+notify_state recording
 $AFPLAY /System/Library/Sounds/Pop.aiff &
 
 # Record with silence detection:
@@ -40,19 +47,25 @@ $REC -q "$TEMP_WAV" rate 16k channels 1 \
     trim 0 $MAX_DURATION 2>/dev/null
 
 if [ ! -f "$TEMP_WAV" ] || [ ! -s "$TEMP_WAV" ]; then
+    notify_state error
     $AFPLAY /System/Library/Sounds/Basso.aiff &
     exit 1
 fi
+
+# Notify transcribing state
+notify_state transcribing
 
 # Transcribe
 TEXT=$($WHISPER -m "$MODEL" -f "$TEMP_WAV" -t 8 --no-timestamps 2>/dev/null | grep -v "^$" | sed 's/^[[:space:]]*//' | tr -d '\n')
 
 if [ -z "$TEXT" ]; then
+    notify_state error
     $AFPLAY /System/Library/Sounds/Basso.aiff &
     exit 1
 fi
 
-# Play success sound
+# Notify success and play success sound
+notify_state success
 $AFPLAY /System/Library/Sounds/Glass.aiff &
 
 # Use clipboard + paste (works reliably in all apps including Chrome)
