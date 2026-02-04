@@ -10,6 +10,7 @@ Press a hotkey anywhere, speak, and your words are typed automatically. No subsc
 
 - **Works everywhere** - Chrome, Safari, Notes, VS Code, Slack, and any other app
 - **Offline & private** - No data leaves your Mac
+- **Accurate** - Uses Whisper small.en model for reliable transcription
 - **Auto-stops on silence** - Just pause speaking
 - **Visual indicator** - Floating pill shows recording/transcribing status
 - **Free forever** - No subscriptions or API costs
@@ -77,7 +78,7 @@ voice-claude-chat   # Interactive voice chat with Claude
 ```bash
 rm ~/bin/voice-type ~/bin/voice-shortcut ~/bin/voice-claude ~/bin/voice-claude-chat ~/bin/voicetype-notify
 rm -rf /Applications/VoiceType.app /Applications/VoiceTypeIndicator.app
-rm -rf ~/.local/share/whisper-cpp  # Optional: removes ~250MB of models
+rm -rf ~/.local/share/whisper-cpp  # Optional: removes ~540MB of models
 ```
 
 ## Credits
