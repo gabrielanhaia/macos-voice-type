@@ -11,7 +11,7 @@ AFPLAY="/usr/bin/afplay"
 OSASCRIPT="/usr/bin/osascript"
 NOTIFY="$HOME/bin/voicetype-notify"
 
-MODEL="$HOME/.local/share/whisper-cpp/ggml-tiny.en.bin"
+MODEL="$HOME/.local/share/whisper-cpp/ggml-base.en.bin"
 TEMP_WAV="/tmp/voice-type-$$.wav"
 
 # Max recording time (safety limit)

@@ -19,7 +19,7 @@ WHISPER="$HOMEBREW_PREFIX/bin/whisper-cli"
 AFPLAY="/usr/bin/afplay"
 NOTIFY="$HOME/bin/voicetype-notify"
 
-MODEL="$HOME/.local/share/whisper-cpp/ggml-tiny.en.bin"
+MODEL="$HOME/.local/share/whisper-cpp/ggml-base.en.bin"
 TEMP_WAV="/tmp/voice-shortcut-$$.wav"
 MAX_DURATION=60
 
