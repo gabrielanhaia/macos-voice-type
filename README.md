@@ -11,6 +11,7 @@ Press a hotkey anywhere, speak, and your words are typed automatically. No subsc
 - **Works everywhere** - Chrome, Safari, Notes, VS Code, Slack, and any other app
 - **Offline & private** - No data leaves your Mac
 - **Auto-stops on silence** - Just pause speaking
+- **Visual indicator** - Floating pill shows recording/transcribing status
 - **Free forever** - No subscriptions or API costs
 
 ## Install
@@ -48,6 +49,13 @@ cd macos-voice-type
 
 > **Note:** Restart apps like Chrome after setup for the shortcut to work.
 
+### Optional: Start Indicator on Login
+
+The visual indicator runs automatically after install. To start it on login:
+
+1. Open **System Settings** → **General** → **Login Items**
+2. Click **+** → select `/Applications/VoiceTypeIndicator.app`
+
 ## Terminal Commands (Optional)
 
 ```bash
@@ -67,8 +75,8 @@ voice-claude-chat   # Interactive voice chat with Claude
 ## Uninstall
 
 ```bash
-rm ~/bin/voice-type ~/bin/voice-shortcut ~/bin/voice-claude ~/bin/voice-claude-chat
-rm -rf /Applications/VoiceType.app
+rm ~/bin/voice-type ~/bin/voice-shortcut ~/bin/voice-claude ~/bin/voice-claude-chat ~/bin/voicetype-notify
+rm -rf /Applications/VoiceType.app /Applications/VoiceTypeIndicator.app
 rm -rf ~/.local/share/whisper-cpp  # Optional: removes ~250MB of models
 ```
 
