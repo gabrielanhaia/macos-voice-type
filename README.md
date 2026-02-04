@@ -36,7 +36,7 @@ cd macos-voice-type
 1. Open **Shortcuts** app
 2. Click **+** → name it "Voice Type"
 3. Add **"Run Shell Script"** action
-4. Enter: `$HOME/bin/voice-shortcut`
+4. Enter: `$HOME/bin/voice-shortcut` (make sure no "Shortcut Input" variable is added)
 5. Click shortcut name → **Add Keyboard Shortcut** → press your keys (e.g. `Ctrl+Option+V`)
 
 <img width="1199" height="443" alt="image" src="https://github.com/user-attachments/assets/3c4798cc-c1f5-4c2c-9a16-bffc96ee6625" />
