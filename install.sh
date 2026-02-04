@@ -73,13 +73,13 @@ else
     echo "tiny.en model already exists"
 fi
 
-# Download base.en model (better accuracy, for terminal commands)
-if [ ! -f "$MODEL_DIR/ggml-base.en.bin" ]; then
-    echo "Downloading base.en model (142MB)..."
-    curl -L "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin" \
-        -o "$MODEL_DIR/ggml-base.en.bin"
+# Download small.en model (better accuracy)
+if [ ! -f "$MODEL_DIR/ggml-small.en.bin" ]; then
+    echo "Downloading small.en model (466MB)..."
+    curl -L "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin" \
+        -o "$MODEL_DIR/ggml-small.en.bin"
 else
-    echo "base.en model already exists"
+    echo "small.en model already exists"
 fi
 echo -e "${GREEN}Models downloaded${NC}"
 
